@@ -213,7 +213,7 @@ MIT License
 
 ## 作者
 
-WorkBuddy AI Assistant
+1028395447@qq.com
 
 ---
 
