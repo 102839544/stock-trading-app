@@ -1,0 +1,6 @@
+{
+  "name": "stock-trading-app",
+  "description": "股票模拟交易软件 - 完整的模拟炒股平台",
+  "public": true,
+  "has_readme": false
+}
