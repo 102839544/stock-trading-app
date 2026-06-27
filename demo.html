@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>股票模拟交易软件 - 演示版</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: #F9F9F9;
+      color: #0A1628;
+    }
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; height: 64px;
+      background: white; border-bottom: 1px solid #EAEAEA;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 24px; z-index: 1000;
+    }
+    .logo { font-size: 20px; font-weight: 700; color: #014DB2; }
+    .main-container { display: flex; margin-top: 64px; height: calc(100vh - 64px); }
+    .sidebar {
+      width: 240px; background: white; border-right: 1px solid #EAEAEA;
+      padding: 16px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+      border-radius: 8px; cursor: pointer; font-size: 15px; color: #6B7280;
+      transition: all 0.3s;
+    }
+    .nav-item:hover { background: #F0F7FF; color: #014DB2; }
+    .nav-item.active { background: #F0F7FF; color: #014DB2; font-weight: 600; }
+    .content { flex: 1; padding: 24px; overflow-y: auto; background: #F9F9F9; }
+    .index-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .index-card {
+      background: white; border-radius: 12px; padding: 16px;
+      border: 1px solid #EAEAEA; cursor: pointer; transition: all 0.3s;
+    }
+    .index-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+    .index-name { font-size: 14px; color: #6B7280; margin-bottom: 8px; }
+    .index-price { font-size: 28px; font-weight: 700; color: #0A1628; margin-bottom: 8px; }
+    .up { color: #F5222D !important; }
+    .down { color: #52C41A !important; }
+    .stock-table { background: white; border-radius: 12px; padding: 20px; border: 1px solid #EAEAEA; }
+    .stock-row {
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+      padding: 16px; border-bottom: 1px solid #F0F0F0; align-items: center;
+      cursor: pointer;
+    }
+    .stock-row:hover { background: #F9F9F9; }
+    .btn-buy { background: #F5222D; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+    .btn-sell { background: #52C41A; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;
+    }
+    .modal.active { display: flex; }
+    .modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 480px; width: 90%; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">模拟炒股</div>
+    <div style="display: flex; gap: 16px; align-items: center;">
+      <span style="color: #6B7280;">演示模式</span>
+      <button onclick="showLoginModal()" style="padding: 8px 16px; background: #014DB2; color: white; border: none; border-radius: 6px; cursor: pointer;">登录</button>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <nav class="sidebar">
+      <div class="nav-item active" onclick="switchPage('market')">📈 市场行情</div>
+      <div class="nav-item" onclick="switchPage('trade')">💰 模拟交易</div>
+      <div class="nav-item" onclick="switchPage('holdings')">📊 我的持仓</div>
+    </nav>
+
+    <main class="content">
+      <div id="marketPage">
+        <h2 style="margin-bottom: 20px;">市场行情</h2>
+        <div class="index-cards">
+          <div class="index-card">
+            <div class="index-name">上证指数</div>
+            <div class="index-price" id="shIndex">3,245.67</div>
+            <div><span class="up">+23.45 (+0.73%)</span></div>
+          </div>
+          <div class="index-card">
+            <div class="index-name">深证成指</div>
+            <div class="index-price" id="szIndex">10,892.34</div>
+            <div><span class="down">-45.67 (-0.42%)</span></div>
+          </div>
+          <div class="index-card">
+            <div class="index-name">创业板指</div>
+            <div class="index-price" id="cybIndex">2,156.89</div>
+            <div><span class="up">+12.34 (+0.58%)</span></div>
+          </div>
+        </div>
+
+        <div class="stock-table">
+          <h3 style="margin-bottom: 16px;">热门股票</h3>
+          <div class="stock-row" style="font-weight: 600; color: #6B7280; border-bottom: 2px solid #EAEAEA;">
+            <span>股票名称</span><span>最新价</span><span>涨跌幅</span><span>操作</span>
+          </div>
+          <div class="stock-row">
+            <div>
+              <div style="font-weight: 500;">贵州茅台</div>
+              <div style="font-size: 12px; color: #9CA3AF;">600519</div>
+            </div>
+            <span class="up" id="price600519">1,856.00</span>
+            <span class="up">+2.35%</span>
+            <button class="btn-buy" onclick="showTradeModal('600519', '贵州茅台', 1856.00)">交易</button>
+          </div>
+          <div class="stock-row">
+            <div>
+              <div style="font-weight: 500;">宁德时代</div>
+              <div style="font-size: 12px; color: #9CA3AF;">300750</div>
+            </div>
+            <span class="down" id="price300750">198.50</span>
+            <span class="down">-1.25%</span>
+            <button class="btn-buy" onclick="showTradeModal('300750', '宁德时代', 198.50)">交易</button>
+          </div>
+          <div class="stock-row">
+            <div>
+              <div style="font-weight: 500;">中国平安</div>
+              <div style="font-size: 12px; color: #9CA3AF;">601318</div>
+            </div>
+            <span class="up" id="price601318">48.92</span>
+            <span class="up">+0.88%</span>
+            <button class="btn-buy" onclick="showTradeModal('601318', '中国平安', 48.92)">交易</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="tradePage" style="display: none;">
+        <h2>模拟交易</h2>
+        <p style="margin-top: 16px; color: #6B7280;">请点击股票列表中的"交易"按钮进行操作</p>
+      </div>
+
+      <div id="holdingsPage" style="display: none;">
+        <h2>我的持仓</h2>
+        <div style="background: white; border-radius: 12px; padding: 20px; margin-top: 16px;">
+          <p style="color: #6B7280;">演示模式下暂无持仓数据</p>
+          <p style="color: #6B7280; margin-top: 8px;">请运行完整的服务器版本查看实时数据</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="tradeModal" class="modal">
+    <div class="modal-content">
+      <h3>模拟交易</h3>
+      <div style="margin-top: 16px;">
+        <p>股票代码: <span id="modalCode"></span></p>
+        <p>股票名称: <span id="modalName"></span></p>
+        <p>当前价格: <span id="modalPrice"></span></p>
+        <input type="number" id="tradeQuantity" placeholder="交易数量（手）" style="width: 100%; padding: 12px; margin-top: 12px; border: 1px solid #EAEAEA; border-radius: 8px;">
+        <div style="display: flex; gap: 12px; margin-top: 16px;">
+          <button class="btn-buy" style="flex: 1;" onclick="executeTrade('buy')">买入</button>
+          <button class="btn-sell" style="flex: 1;" onclick="executeTrade('sell')">卖出</button>
+        </div>
+      </div>
+      <button onclick="closeModal()" style="margin-top: 12px; padding: 8px 16px; background: #EAEAEA; border: none; border-radius: 6px; cursor: pointer;">关闭</button>
+    </div>
+  </div>
+
+  <script>
+    let currentStock = null;
+    let balance = 100000;
+    let holdings = [];
+
+    // 模拟实时价格更新
+    setInterval(() => {
+      updatePrice('price600519', 1856.00);
+      updatePrice('price300750', 198.50);
+      updatePrice('price601318', 48.92);
+    }, 3000);
+
+    function updatePrice(elementId, basePrice) {
+      const fluctuation = (Math.random() - 0.5) * 0.02;
+      const newPrice = basePrice * (1 + fluctuation);
+      const element = document.getElementById(elementId);
+      element.textContent = newPrice.toFixed(2);
+    }
+
+    function switchPage(page) {
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      document.getElementById('marketPage').style.display = 'none';
+      document.getElementById('tradePage').style.display = 'none';
+      document.getElementById('holdingsPage').style.display = 'none';
+      
+      if (page === 'market') {
+        document.getElementById('marketPage').style.display = 'block';
+        document.querySelectorAll('.nav-item')[0].classList.add('active');
+      } else if (page === 'trade') {
+        document.getElementById('tradePage').style.display = 'block';
+        document.querySelectorAll('.nav-item')[1].classList.add('active');
+      } else if (page === 'holdings') {
+        document.getElementById('holdingsPage').style.display = 'block';
+        document.querySelectorAll('.nav-item')[2].classList.add('active');
+      }
+    }
+
+    function showTradeModal(code, name, price) {
+      currentStock = { code, name, price };
+      document.getElementById('modalCode').textContent = code;
+      document.getElementById('modalName').textContent = name;
+      document.getElementById('modalPrice').textContent = price.toFixed(2);
+      document.getElementById('tradeModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('tradeModal').classList.remove('active');
+    }
+
+    function executeTrade(type) {
+      const quantity = parseInt(document.getElementById('tradeQuantity').value);
+      if (!quantity || quantity <= 0) {
+        alert('请输入有效的交易数量');
+        return;
+      }
+
+      const totalAmount = currentStock.price * quantity * 100;
+      
+      if (type === 'buy') {
+        if (balance < totalAmount) {
+          alert('余额不足！');
+          return;
+        }
+        balance -= totalAmount;
+        alert(`买入成功！\n股票: ${currentStock.name}\n数量: ${quantity}手\n总金额: ¥${totalAmount.toFixed(2)}\n剩余余额: ¥${balance.toFixed(2)}`);
+      } else {
+        alert(`卖出成功！\n股票: ${currentStock.name}\n数量: ${quantity}手\n总金额: ¥${totalAmount.toFixed(2)}`);
+        balance += totalAmount;
+      }
+      
+      closeModal();
+    }
+
+    function showLoginModal() {
+      alert('演示模式\n\n完整版本功能：\n✅ 用户注册/登录\n✅ 实时股票数据\n✅ WebSocket推送\n✅ 完整交易系统\n✅ 数据持久化\n\n请运行 npm start 启动完整服务器');
+    }
+  </script>
+</body>
+</html>
