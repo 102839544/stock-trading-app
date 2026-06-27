@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>模拟炒股 - 股票交易软件</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 登录/注册弹窗 -->
+  <div id="authModal" class="modal">
+    <div class="modal-content auth-container">
+      <div class="auth-header">
+        <h2 id="authTitle">登录</h2>
+        <span class="close-btn" onclick="closeAuthModal()">&times;</span>
+      </div>
+      <div class="auth-tabs">
+        <button class="tab-btn active" onclick="switchAuthTab('login')">登录</button>
+        <button class="tab-btn" onclick="switchAuthTab('register')">注册</button>
+      </div>
+      <form id="loginForm" class="auth-form">
+        <input type="text" id="loginUsername" placeholder="用户名" required>
+        <input type="password" id="loginPassword" placeholder="密码" required>
+        <button type="submit" class="btn-primary">登录</button>
+      </form>
+      <form id="registerForm" class="auth-form" style="display: none;">
+        <input type="text" id="registerUsername" placeholder="用户名" required>
+        <input type="email" id="registerEmail" placeholder="邮箱（可选）">
+        <input type="password" id="registerPassword" placeholder="密码" required>
+        <button type="submit" class="btn-primary">注册</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 主应用界面 -->
+  <div id="app" style="display: none;">
+    <!-- 顶部导航栏 -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">模拟炒股</div>
+        <div class="search-box">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="8" cy="8" r="6" stroke="#6B7280" stroke-width="2"/>
+            <path d="M13 13L17 17" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="搜索股票代码/名称" onkeyup="searchStock(event)">
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="market-status">
+          <span class="status-dot"></span>
+          <span>市场中</span>
+        </div>
+        <div class="user-info" onclick="showUserMenu()">
+          <div class="user-avatar" id="userAvatar">用户</div>
+          <span id="usernameDisplay">用户名</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <div class="main-container">
+      <!-- 左侧导航栏 -->
+      <nav class="sidebar">
+        <div class="nav-item active" onclick="switchPage('market')">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M3 15L7 9L11 12L17 4" stroke="#014DB2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>市场行情</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('watchlist')">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 3L12 8L17 9L13 12L14 17L10 15L6 17L7 12L3 9L8 8L10 3Z" stroke="#6B7280" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+          <span>自选股</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('trade')">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M4 10L8 6L12 10L16 4" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="16" cy="4" r="2" fill="#6B7280"/>
+          </svg>
+          <span>模拟交易</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('holdings')">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect x="3" y="3" width="14" height="14" rx="2" stroke="#6B7280" stroke-width="2"/>
+            <path d="M7 10L9 12L13 8" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>我的持仓</span>
+        </div>
+      </nav>
+
+      <!-- 右侧内容区 -->
+      <main class="content">
+        <!-- 市场行情页面 -->
+        <div id="marketPage" class="page">
+          <div class="market-header">
+            <h2>市场行情</h2>
+            <div class="refresh-btn" onclick="refreshData()">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M14 8C14 11.314 11.314 14 8 14C4.686 14 2 11.314 2 8C2 4.686 4.686 2 8 2C10.5 2 12.6 3.5 13.4 5.8" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M14 2V6H10" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>刷新</span>
+            </div>
+          </div>
+
+          <!-- 指数卡片 -->
+          <div class="index-cards">
+            <div class="index-card" id="index000001" onclick="showStockDetail('000001')">
+              <div class="index-name">上证指数</div>
+              <div class="index-price">--</div>
+              <div class="index-change">
+                <span class="change-value">--</span>
+                <span class="change-percent">--</span>
+              </div>
+            </div>
+            <div class="index-card" id="index399001" onclick="showStockDetail('399001')">
+              <div class="index-name">深证成指</div>
+              <div class="index-price">--</div>
+              <div class="index-change">
+                <span class="change-value">--</span>
+                <span class="change-percent">--</span>
+              </div>
+            </div>
+            <div class="index-card" id="index399006" onclick="showStockDetail('399006')">
+              <div class="index-name">创业板指</div>
+              <div class="index-price">--</div>
+              <div class="index-change">
+                <span class="change-value">--</span>
+                <span class="change-percent">--</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 股票列表 -->
+          <div class="stock-list-section">
+            <h3>热门股票</h3>
+            <div class="stock-table">
+              <div class="table-header">
+                <span>股票名称</span>
+                <span>最新价</span>
+                <span>涨跌幅</span>
+                <span>操作</span>
+              </div>
+              <div id="stockList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 股票详情页面 -->
+        <div id="stockDetailPage" class="page" style="display: none;">
+          <div class="stock-detail-header">
+            <div class="stock-title">
+              <h2 id="detailStockName">--</h2>
+              <span id="detailStockCode" class="stock-code">--</span>
+            </div>
+            <div class="stock-price-display">
+              <span id="detailPrice" class="price-large">--</span>
+              <div class="price-change">
+                <span id="detailChange">--</span>
+                <span id="detailChangePercent">--</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stock-detail-content">
+            <div class="chart-section">
+              <div class="chart-placeholder">
+                <div class="chart-title">实时走势图</div>
+                <canvas id="priceChart" width="800" height="400"></canvas>
+              </div>
+            </div>
+
+            <div class="stock-info-section">
+              <h3>股票信息</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">成交量</span>
+                  <span id="detailVolume" class="info-value">--</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">成交额</span>
+                  <span id="detailAmount" class="info-value">--</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">总市值</span>
+                  <span id="detailMarketCap" class="info-value">--</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">市盈率</span>
+                  <span id="detailPE" class="info-value">--</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="trade-section">
+              <button class="btn-buy" onclick="showTradeModal('buy')">买入</button>
+              <button class="btn-sell" onclick="showTradeModal('sell')">卖出</button>
+            </div>
+          </div>
+
+          <button class="back-btn" onclick="switchPage('market')">← 返回</button>
+        </div>
+
+        <!-- 交易弹窗 -->
+        <div id="tradeModal" class="modal">
+          <div class="modal-content trade-modal">
+            <div class="modal-header">
+              <h3 id="tradeModalTitle">买入股票</h3>
+              <span class="close-btn" onclick="closeTradeModal()">&times;</span>
+            </div>
+            <div class="trade-form">
+              <div class="form-group">
+                <label>股票代码</label>
+                <input type="text" id="tradeStockCode" readonly>
+              </div>
+              <div class="form-group">
+                <label>股票名称</label>
+                <input type="text" id="tradeStockName" readonly>
+              </div>
+              <div class="form-group">
+                <label>当前价格</label>
+                <input type="text" id="tradePrice" readonly>
+              </div>
+              <div class="form-group">
+                <label>交易数量（手）</label>
+                <input type="number" id="tradeQuantity" min="1" value="1" onchange="calculateTotal()">
+              </div>
+              <div class="form-group">
+                <label>总金额</label>
+                <input type="text" id="tradeTotal" readonly>
+              </div>
+              <div class="form-group">
+                <label>可用余额</label>
+                <input type="text" id="tradeBalance" readonly>
+              </div>
+              <button id="tradeSubmitBtn" class="btn-primary" onclick="submitTrade()">确认买入</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 持仓页面 -->
+        <div id="holdingsPage" class="page" style="display: none;">
+          <h2>我的持仓</h2>
+          <div class="balance-card">
+            <span>可用余额：</span>
+            <span id="userBalance" class="balance-amount">¥100,000.00</span>
+          </div>
+          <div class="holdings-list" id="holdingsList">
+            <div class="empty-state">暂无持仓</div>
+          </div>
+        </div>
+
+        <!-- 交易记录页面 -->
+        <div id="transactionsPage" class="page" style="display: none;">
+          <h2>交易记录</h2>
+          <div class="transactions-list" id="transactionsList">
+            <div class="empty-state">暂无交易记录</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
